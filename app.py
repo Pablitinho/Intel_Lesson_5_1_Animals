@@ -3,7 +3,8 @@ import cv2
 from inference import Network
 
 INPUT_STREAM = "pets.mp4"
-CPU_EXTENSION = "/opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension_sse4.so"
+#CPU_EXTENSION = "/opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension_sse4.so"
+CPU_EXTENSION = "C:\\Program Files (x86)\\IntelSWTools\\openvino_2019.3.379\\inference_engine\\bin\\intel64\\Release\\cpu_extension_avx2.dll"
 
 def get_args():
     '''
@@ -28,6 +29,22 @@ def get_args():
 
     return args
 
+def display_image(image,text):
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    bottomLeftCornerOfText = (10, 30)
+    fontScale = 1
+    fontColor = (255, 0, 0)
+    lineType = 2
+
+    cv2.putText(image, text,
+                bottomLeftCornerOfText,
+                font,
+                fontScale,
+                fontColor,
+                lineType)
+    cv2.imshow('image', image)
+    cv2.waitKey(10)
 
 def infer_on_video(args):
     # Initialize the Inference Engine
@@ -51,6 +68,8 @@ def infer_on_video(args):
 
         # Pre-process the frame
         p_frame = cv2.resize(frame, (net_input_shape[3], net_input_shape[2]))
+        p_frame_original = p_frame
+
         p_frame = p_frame.transpose((2,0,1))
         p_frame = p_frame.reshape(1, *p_frame.shape)
 
@@ -61,7 +80,14 @@ def infer_on_video(args):
         if plugin.wait() == 0:
             result = plugin.extract_output()
             ### TODO: Process the output
-            
+            print(result)
+
+            if result[0][2] == 1:
+                display_image(p_frame_original, "Good Dog...")
+            elif result[0][1] == 1:
+                display_image(p_frame_original, "Bad Dog...")
+            else:
+                display_image(p_frame_original, "WTF...")
 
         # Break if escape key pressed
         if key_pressed == 27:
